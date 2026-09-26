@@ -104,7 +104,15 @@ function lpdFromRow(r){
     sptNumber:r.spt_number, spdNumber:r.spd_number, sptManual:r.spt_manual, spdManual:r.spd_manual,
     hari:r.hari, tanggal:r.tanggal, kegiatan:r.kegiatan, lokasi:r.lokasi,
     desaId:r.desa_id||'', dusunId:r.dusun_id||'', rt:r.rt||'',
-    officers:r.officers||[], fields:r.fields||{}, extraFieldValues:r.extra_field_values||{},
+    officers:r.officers||[], fields:{
+      sasaran:r.sasaran ?? (r.fields?.sasaran||''),
+      proses:r.proses ?? (r.fields?.proses||''),
+      alatBahan:r.alat_bahan ?? (r.fields?.alatBahan||''),
+      capaian:r.capaian ?? (r.fields?.capaian||''),
+      lintasProgram:r.lintas_program ?? (r.fields?.lintasProgram||''),
+      lintasSektor:r.lintas_sektor ?? (r.fields?.lintasSektor||''),
+      umpanBalik:r.umpan_balik ?? (r.fields?.umpanBalik||'')
+    }, extraFieldValues:r.extra_field_values||{},
     masalah:r.masalah, rekomendasi:r.rekomendasi, pjId:r.pj_id, photos:r.photos||[], collage:r.collage||{template:'grid-3',ratio:'1:1',gap:8},
     createdAt:r.created_at, updatedAt:r.updated_at
   };
@@ -116,7 +124,17 @@ function lpdToRow(d){
     spt_number:d.sptNumber, spd_number:d.spdNumber, spt_manual:!!d.sptManual, spd_manual:!!d.spdManual,
     hari:d.hari, tanggal:d.tanggal||null, kegiatan:d.kegiatan, lokasi:d.lokasi,
     desa_id:d.desaId||null, dusun_id:d.dusunId||null, rt:d.rt||null,
-    officers:d.officers, fields:d.fields, extra_field_values:d.extraFieldValues,
+    officers:d.officers,
+    // Field laporan disimpan sebagai kolom PostgreSQL terpisah agar mudah dicari,
+    // diekspor, dan digunakan untuk laporan; objek fields tetap dipertahankan untuk kompatibilitas data lama.
+    sasaran:d.fields?.sasaran||'',
+    proses:d.fields?.proses||'',
+    alat_bahan:d.fields?.alatBahan||'',
+    capaian:d.fields?.capaian||'',
+    lintas_program:d.fields?.lintasProgram||'',
+    lintas_sektor:d.fields?.lintasSektor||'',
+    umpan_balik:d.fields?.umpanBalik||'',
+    fields:d.fields, extra_field_values:d.extraFieldValues,
     masalah:d.masalah, rekomendasi:d.rekomendasi, pj_id:d.pjId, photos:d.photos, collage:d.collage||{template:'grid-3',ratio:'1:1',gap:8},
     updated_at:new Date().toISOString()
   };
