@@ -678,13 +678,18 @@ function renderDocPreview(d){
         ${[...rows,...lapRows,...extraRows].map(r=>`<div class="kv"><b>${escapeHtml(r[0])}</b> : <span style="${stTabelVal}">${r[1]||'-'}</span></div>`).join('')}
         ${tailRows.map(r=>`<div class="kv"><b>${escapeHtml(r[0])}</b> : <span style="${stTabelVal}">${r[1]||'-'}</span></div>`).join('')}
       </div>
-      <div class="row" style="margin-top:16px;gap:20px;align-items:flex-start;${stTtd}">
-        <div style="flex:0 0 36%">${escapeHtml(pj.jabatan||'PJ UKM Esensial')}<br><br><br><b>${escapeHtml(pj.name||'')}</b><br>NIP. ${escapeHtml(pj.nip||'')}</div>
-        <div style="flex:1">${escapeHtml(kop.kotaSurat)}, ${tanggalSurat}<br>Pelaksana Kegiatan<br><br>
+
+      <div style="margin-top:16px;${stTtd};width:88%;margin-left:8%;display:grid;grid-template-columns:1fr 1fr;column-gap:24px;align-items:start;">
+        <div style="text-align:center">
+          ${escapeHtml(pj.jabatan||'PJ UKM Esensial')}<br><br><br>
+          <b>${escapeHtml(pj.name||'')}</b><br>NIP. ${escapeHtml(pj.nip||'')}
+        </div>
+        <div style="text-align:center">
+          ${escapeHtml(kop.kotaSurat)}, ${tanggalSurat}<br>Pelaksana Kegiatan<br><br>
           ${(officerColsPrev.length?officerColsPrev:[{name:''}]).map((o,i)=>`${i+1}. <b>${escapeHtml(o.name||'')}</b> ........................`).join('<br>')}
         </div>
       </div>
-      <div class="center" style="margin-top:14px;${stTtd}">
+      <div class="center" style="margin-top:14px;${stTtd};width:50%;margin-left:25%;">
         Mengetahui,<br>${escapeHtml(k.jabatan)}<br><br><br><b>${escapeHtml(k.name)}</b><br>NIP. ${escapeHtml(k.nip)}
       </div>
       <div style="margin-top:16px"><b>DOKUMENTASI KEGIATAN</b></div>
@@ -1044,16 +1049,29 @@ async function generateDocxBlob(d){
   // Tanda tangan: dibuat tanpa garis tabel agar menyerupai susunan Word contoh.
   const pj=pjFor(d.pjId);
   const officerCols=officers.slice(0,Math.max(1,S.officerColumns||2));
+
   const sigCount=Math.max(1,officerCols.length);
-  const sigWidths=[Math.round(contentW*0.36),Math.round(contentW*0.64)];
+  // Susunan tanda tangan berbentuk segitiga sama kaki.
+  const sigWidths=[
+    Math.round(contentW*0.12),
+    Math.round(contentW*0.38),
+    Math.round(contentW*0.38),
+    Math.max(1,Math.round(contentW*0.12))
+  ];
   let sigTbl=tableStartNB(sigWidths);
-  let pjCell=para(pj.jabatan||'PJ UKM Esensial',{size:szTtd,after:0,b:bTtd})+emptyPara()+emptyPara()+para(pj.name||'',{size:szTtd,after:0,b:true})+para('NIP. '+(pj.nip||''),{size:szTtd,after:0,b:bTtd});
+  let pjCell=para(pj.jabatan||'PJ UKM Esensial',{align:'center',size:szTtd,after:0,b:bTtd})+emptyPara()+emptyPara()+para(pj.name||'',{align:'center',size:szTtd,after:0,b:true})+para('NIP. '+(pj.nip||''),{align:'center',size:szTtd,after:0,b:bTtd});
   let officerCell='';
   const tanggalSurat=d.tanggal?formatTanggalContoh(d.tanggal):'...................';
-  officerCell+=para(kop.kotaSurat+', '+tanggalSurat,{size:szTtd,after:0,b:bTtd})+para('Pelaksana Kegiatan',{size:szTtd,after:0,b:bTtd})+emptyPara();
+  officerCell+=para(kop.kotaSurat+', '+tanggalSurat,{align:'center',size:szTtd,after:0,b:bTtd})+para('Pelaksana Kegiatan',{align:'center',size:szTtd,after:0,b:bTtd})+emptyPara();
   const officerList=officerCols.length?officerCols:[{name:''}];
-  officerList.forEach((o,i)=>{ officerCell+=para(`${i+1}. ${o.name||''} ........................`,{size:szTtd,after:0,b:!!o.name}); });
-  sigTbl+=tr(tcNB(sigWidths[0],pjCell)+tcNB(sigWidths[1],officerCell));
+  officerList.forEach((o,i)=>{ officerCell+=para(`${i+1}. ${o.name||''} ........................`,{align:'center',size:szTtd,after:0,b:!!o.name}); });
+  sigTbl+=tr(
+    tcNB(sigWidths[0],emptyPara())+
+    tcNB(sigWidths[1],pjCell)+
+    tcNB(sigWidths[2],officerCell)+
+    tcNB(sigWidths[3],emptyPara())
+  );
+  sigTbl+='</w:tbl>';
   let kepalaContent=para('Mengetahui,',{align:'center',size:szTtd,after:0,b:bTtd})+para(k.jabatan||'',{align:'center',size:szTtd,after:0,b:bTtd});
   const ttdRel=k.ttdUrl?await addMedia(k.ttdUrl):null;
   const stampRel=k.stampUrl?await addMedia(k.stampUrl):null;
@@ -1063,7 +1081,7 @@ async function generateDocxBlob(d){
   if(stampRel) nameLineRaw+=anchoredImageXml(stampRel,(k.stampWidthCm||2.8)*CM_TO_EMU,(k.stampWidthCm||2.8)*CM_TO_EMU,(k.stampOffsetXCm||0)*CM_TO_EMU,(k.stampOffsetYCm||0)*CM_TO_EMU,docPrCounter++);
   if(nameLineRaw) kepalaContent+=para(null,{align:'center',after:0,raw:nameLineRaw});
   kepalaContent+=para(k.name||'',{align:'center',size:szTtd,after:0,b:true})+para('NIP. '+(k.nip||''),{align:'center',size:szTtd,after:0,b:bTtd});
-  sigTbl+=tr(tcNB(contentW,kepalaContent,{colspan:2}));
+  sigTbl+=tr(tcNB(contentW,kepalaContent,{colspan:4}));
   sigTbl+='</w:tbl>';
   body+=sigTbl+emptyPara();
 
