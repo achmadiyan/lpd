@@ -306,7 +306,9 @@ async function saveSettings(s){
   if(!ME.isAdmin){ toast('Hanya admin yang bisa mengubah pengaturan.'); return; }
   const {error} = await sb.from('settings').update(settingsToRow(s)).eq('id',1);
   if(error){ toast('Gagal simpan: '+error.message); return; }
-  SETTINGS=s; toast('Pengaturan disimpan.');
+  SETTINGS=s;
+  window._settingsDraft=null;
+  toast('Pengaturan disimpan.');
 }
 async function addSeries(){
   const {data,error} = await sb.from('numbering_series').insert({name:'Seri Baru'}).select().single();
@@ -722,7 +724,8 @@ function formatTanggalID(iso){
 /* ============================== SETTINGS (admin) ============================== */
 function renderSettings(){
   if(!ME.isAdmin) return `<div class="card"><div class="empty">Halaman ini khusus admin.</div></div>`;
-  const s=JSON.parse(JSON.stringify(SETTINGS)); window._settingsDraft=s;
+  const s=window._settingsDraft ? window._settingsDraft : JSON.parse(JSON.stringify(SETTINGS));
+  window._settingsDraft=s;
   const kop=s.kop, paper=s.paper, k=s.kepala;
   return `
     <div class="card">
